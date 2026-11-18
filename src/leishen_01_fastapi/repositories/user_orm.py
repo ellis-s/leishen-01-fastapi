@@ -126,16 +126,24 @@ update_user_sql(2, "男")
 
 
 # TODO 删除
-def del_user(id):
+def del_user():
 
+    # TODO session api 写法
+    # with Session(engine) as session:
+    #     # user = session.query(User).filter(User.id == 3).one_or_none()
+    #     user = session.get(User, 3)
+    #     if user:
+    #         session.delete(user)
+    #         session.commit()
+    #     else:
+    #         print("无此用户!!")
+
+    # TODO sql api 写法
     with Session(engine) as session:
-        # user = session.query(User).filter(User.id == id).one_or_none()
-        user = session.get(User, id)
-        if user:
-            session.delete(user)
-            session.commit()
-        else:
-            print("无此用户!!")
+        stmt = Select(User).where(User.id > 4)
+        users = session.scalars(stmt)
+        session.delete_all(users)
+        session.commit()
 
 
-# del_user(3)
+del_user()
