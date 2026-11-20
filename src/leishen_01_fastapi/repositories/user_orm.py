@@ -3,7 +3,7 @@
 """
 
 from sqlalchemy import Integer, Select, String, create_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
 url = "mysql+pymysql://felixsun:L5j5maGOylUqLsJD@mysql6.sqlpub.com:3311/shf_testdb"
 engine = create_engine(
@@ -59,12 +59,12 @@ def add_user(user: User | list[User]):
 #     User(name="李四", age=19, gender="男"),
 # )
 
-add_user(
-    [
-        User(name="王五", age=20, gender="女"),
-        User(name="赵六", age=20, gender="女"),
-    ]
-)
+# add_user(
+#     [
+#         User(name="王五", age=20, gender="女"),
+#         User(name="赵六", age=20, gender="女"),
+#     ]
+# )
 
 
 # TODO 查询，2 种方法，一个是 session api, 另外一个是 sql api
@@ -88,7 +88,10 @@ def query_user_sql():
         # NOTE stmt 是一个 sql 语句， 最终还是需要调用 session.scalar 调用，类似 engine.connct().execute(stmt)
         stmt = Select(User).where(User.gender == "男").where(User.age == 18)
 
-        for row in session.scalars(stmt):
+        result = session.execute(stmt)
+
+        print(result)
+        for row in session.execute(stmt).scalars():
             print(row)
 
 
@@ -122,7 +125,7 @@ def update_user_sql(id, gender="男"):
         session.commit()
 
 
-update_user_sql(2, "男")
+# update_user_sql(2, "男")
 
 
 # TODO 删除
@@ -146,4 +149,34 @@ def del_user():
         session.commit()
 
 
-del_user()
+# del_user()
+
+
+# ======== 测试 sessionmaker =======
+
+SessionFromMaker = sessionmaker(engine)
+
+"""
+使用 SessionFromMaker.begin()的好处是: 成功后会默认 COMMIT , 失败会默认 ROLLBACK
+
+如果是 SessionFromMaker() 的话，需要手动 COMMIT
+"""
+
+
+def change_user():
+
+    # 第一种写法：
+    # with SessionFromMaker.begin() as session:
+    #     user = session.get(User, 2)
+    #     if user:
+    #         user.age = 21
+
+    # 第二种写法
+    with SessionFromMaker() as session:
+        user = session.get(User, 2)
+        if user:
+            user.age = 21
+            session.commit()
+
+
+change_user()
